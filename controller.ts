@@ -34,3 +34,22 @@ export async function validateUser(req: Request, res: Response) {
       return res.status(500).send("Internal Server Error");
   }
 }
+
+export async function decryptToken(req: Request, res: Response) {
+  try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+          res.status(403).send("Header does not exist");
+          return "";
+      }
+      const token = authHeader.split(" ")[1];
+      const decodedUser = jwt.verify(token, "default_secret");
+      //@ts-ignore
+      const response = await db.select().from(users).where(eq(users.user_id, decodedUser.id));
+      const user = response[0]
+      res.json({ result: { user, token } });
+  }
+  catch (err) {
+      res.status(401).json({ err });
+  }
+}
