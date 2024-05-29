@@ -100,3 +100,16 @@ export async function createUser(req: Request, res: Response) {
       res.status(400).json({ success: false, message: "Error creating user" })
   }
 };
+
+export async function getUser(req: Request, res: Response) {
+    try {
+        const userId = req.params.userId
+        //@ts-ignore
+        const user = await db.select().from(users).where(eq(users.user_id, userId));
+        res.status(200).json(user[0]);
+    }
+    catch (err) {
+        console.log(err)
+        res.status(500).json({ success: false, message: "Error getting user" })
+    }
+}
