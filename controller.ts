@@ -53,3 +53,17 @@ export async function decryptToken(req: Request, res: Response) {
       res.status(401).json({ err });
   }
 }
+
+export async function searchUserById(id: number) {
+  try {
+      const result = await db.select().from(users).where(eq(users.user_id, id));
+      if (result.length === 0) {
+          return null;
+      }
+      const user = result;
+      return user;
+  } catch (error) {
+      console.error('Error executing query:', error);
+      // throw new Error('Error searching user by ID');
+  }
+}
