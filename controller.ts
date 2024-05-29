@@ -67,3 +67,36 @@ export async function searchUserById(id: number) {
       // throw new Error('Error searching user by ID');
   }
 }
+
+export async function createUser(req: Request, res: Response) {
+  const { username, password, email } = req.body
+  if (username.length > 32) {
+      return res.json({ success: false, message: "Username max char limit is 32" });
+  }
+  if (password.length > 80) {
+      return res.json({ success: false, message: "password max char limit is 80" });
+  }
+  if (email.length > 255) {
+      return res.json({ success: false, message: "email max char limit is 255" });
+  }
+  try {
+      const usernameQuery = await db.select().from(users).where(eq(users.username, username))
+      if (usernameQuery.length > 0) {
+          return res.json({ success: false, message: "Username already exists" });
+      };
+      const emailQuery = await db.select().from(users).where(eq(users.email, email))
+      if (emailQuery.length > 0) {
+          return res.json({ success: false, message: "An account associated with this email already exists" });
+      };
+      const encrypted = await bcrypt.hash(password, saltRounds);
+      const displayName = username;
+      const now = new Date();
+      const timestamp = now.toISOString();
+      await db.insert(users).values({ username, password: encrypted.toString(), email, display_name: displayName, created_at: timestamp });
+      res.status(201).send({ success: true, message: "Sign up successful!" })
+  }
+  catch (err) {
+      console.log(err)
+      res.status(400).json({ success: false, message: "Error creating user" })
+  }
+};
