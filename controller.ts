@@ -126,3 +126,18 @@ export async function getUsersInChat(req: Request, res: Response) {
         res.status(500).json({ success: false, message: "Error getting users in chat" })
     }
 }
+
+export async function updateUserPassword(req: Request, res: Response) {
+    try {
+        const userId = parseInt(req.params.userId);
+        const incomingUser = await req.body;
+        const incomingPassword = incomingUser.password;
+        const encrypted = await bcrypt.hash(incomingPassword, saltRounds);
+        await db.update(users).set({ password: encrypted.toString() }).where(eq(users.user_id, userId));
+        res.status(200).json({ success: true });
+    }
+    catch (err) {
+        console.log(err);
+        res.status(500).json({ success: false, message: "Error updating password" });
+    }
+}
