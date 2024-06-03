@@ -113,3 +113,16 @@ export async function getUser(req: Request, res: Response) {
         res.status(500).json({ success: false, message: "Error getting user" })
     }
 }
+
+export async function getUsersInChat(req: Request, res: Response) {
+    try {
+        const chatId = req.params.chatId
+        //@ts-ignore
+        const usersQuery = await db.select(users).from(user_chats).innerJoin(users, eq(user_chats.user_id, users.user_id)).where(eq(user_chats.chat_id, parseInt(chatId)))
+        res.status(200).json(usersQuery);
+    }
+    catch (err) {
+        console.log(err)
+        res.status(500).json({ success: false, message: "Error getting users in chat" })
+    }
+}
