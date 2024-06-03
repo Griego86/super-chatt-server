@@ -168,3 +168,17 @@ export async function blockUser(req: Request, res: Response) {
         res.status(500).json({ success: false, message: "Error blocking user" });
     }
 }
+
+export async function unblockUser(req: Request, res: Response) {
+    try {
+        const userId = req.body.userId;
+        const friendName = req.params.friendName;
+        const friend = await db.select().from(users).where(eq(users.username, friendName));
+        await db.update(user_friends).set({ blocked: false }).where(and(eq(user_friends.user_id, userId), eq(user_friends.friend_id, friend[0].user_id)));
+        res.status(200).json({ success: true });
+    }
+    catch (err) {
+        console.log(err);
+        res.status(500).json({ success: false, message: "Error blocking user" });
+    }
+}
