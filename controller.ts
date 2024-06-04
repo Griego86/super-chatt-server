@@ -197,3 +197,31 @@ export async function getUserFriend(req: Request, res: Response) {
         res.status(500).json({ success: false, message: "Error getting user friend" });
     }
 }
+
+export async function addFriend(req: Request, res: Response) {
+    try {
+        const { friend, username } = req.body;
+        if (username === friend) {
+            return res.json({ success: false, message: "That's yourself!" });
+        }
+        const friendResult = await db.select().from(users).where(eq(users.username, friend));
+        if (friendResult.length === 0) {
+            return res.json({ success: false, message: "User does not exist" });
+        }
+        const friendId = friendResult[0].user_id;
+        const userResult = await db.select().from(users).where(eq(users.username, username));
+        const userId = userResult[0].user_id;
+        const friendshipResult = await db.select().from(user_friends).where(and(eq(user_friends.user_id, userId), eq(user_friends.friend_id, friendId)));
+        if (friendshipResult.length > 0) {
+            return res.json({ success: false, message: "User is already your friend!" });
+        }
+        const now = new Date();
+        const timestamp = now.toISOString();
+        await db.insert(user_friends).values({ user_id: userId, friend_id: friendId, display_name: friend, created_at: timestamp });
+        await db.insert(user_friends).values({ user_id: friendId, friend_id: userId, display_name: username, created_at: timestamp });
+        res.status(201).send({ success: true, message: "User Friend created successfully" });
+    } catch (error) {
+        console.error("Error adding friend:", error);
+        res.status(500).send("Internal Server Error");
+    }
+}
