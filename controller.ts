@@ -225,3 +225,16 @@ export async function addFriend(req: Request, res: Response) {
         res.status(500).send("Internal Server Error");
     }
 }
+
+export async function getFriends(req: Request, res: Response) {
+    try {
+        const userId = req.params.userId;
+        //@ts-ignore
+        const friendsQuery = await db.select(users).from(user_friends).innerJoin(users, eq(user_friends.friend_id, users.user_id)).where(eq(user_friends.user_id, userId))
+        const friends = friendsQuery;
+        res.status(200).json(friends);
+    } catch (error) {
+        console.error("Error getting friends:", error);
+        res.status(500).json({ success: false, message: "Error getting friends" });
+    }
+}
