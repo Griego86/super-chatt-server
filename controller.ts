@@ -238,3 +238,30 @@ export async function getFriends(req: Request, res: Response) {
         res.status(500).json({ success: false, message: "Error getting friends" });
     }
 }
+
+export async function createChat(req: Request, res: Response) {
+    try {
+        const title = req.body.title;
+        if (title.length > 255) {
+            return res.json({ success: false, message: "Title max char limit is 32" });
+        }
+        const incomingUser = req.body.user;
+        const userQuery = await db.select().from(users).where(eq(users.username, incomingUser));
+        const user = userQuery[0]
+        const incomingFriend = req.body.friend;
+        const friendQuery = await db.select().from(users).where(eq(users.username, incomingFriend));
+        const friend = friendQuery[0]
+        const now = new Date();
+        const timestamp = now.toISOString();
+        await db.insert(chats).values({ title: title, created_at: timestamp });
+        const chatsQuery = await db.select().from(chats).where(eq(chats.title, title))
+        const chatId = chatsQuery[chatsQuery.length - 1].chat_id;
+        await db.insert(user_chats).values({ user_id: user.user_id, chat_id: chatId, created_at: timestamp });
+        await db.insert(user_chats).values({ user_id: friend.user_id, chat_id: chatId, created_at: timestamp });
+        res.status(200).json({ success: true, message: "Chat added successfully!" });
+    }
+    catch (err) {
+        console.log(err);
+        res.status(500).json({ success: false, message: "Error creating chat" });
+    }
+}
