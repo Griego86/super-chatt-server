@@ -278,3 +278,17 @@ export async function getChats(req: Request, res: Response) {
         res.status(500).json({ success: false, message: "Error getting chats" });
     }
 }
+
+export async function getChat(req: Request, res: Response) {
+    try {
+        const chatId = req.params.chatId;
+        //@ts-ignore
+        const chatQuery = await db.select().from(chats).where(eq(chats.chat_id, chatId));
+        const chat = chatQuery[0]
+        res.status(200).json(chat);
+    }
+    catch (err) {
+        console.log(err);
+        res.status(500).json({ success: false, message: "Error getting chat" });
+    }
+}
