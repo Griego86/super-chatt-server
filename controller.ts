@@ -265,3 +265,16 @@ export async function createChat(req: Request, res: Response) {
         res.status(500).json({ success: false, message: "Error creating chat" });
     }
 }
+
+export async function getChats(req: Request, res: Response) {
+    try {
+        const userId = req.params.userId;
+        //@ts-ignore
+        const userChatsQuery = await db.select(chats).from(user_chats).innerJoin(chats, eq(user_chats.chat_id, chats.chat_id)).where(eq(user_chats.user_id, userId))
+        res.status(200).json(userChatsQuery);
+    }
+    catch (err) {
+        console.error("Error getting chats:", err);
+        res.status(500).json({ success: false, message: "Error getting chats" });
+    }
+}
