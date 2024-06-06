@@ -4,7 +4,7 @@ import { pgTable, serial, text, varchar, date, boolean, timestamp, integer } fro
 
 const Pool = pg.Pool
 
-const connectionString = "postgresql://postgres:upqVUxABzeaUqIQadpjbBYmJmgpvglIm@monorail.proxy.rlwy.net:58027/railway"
+const connectionString = "postgresql://postgres:cMyPkhXbCSDQUwRnWdNYtOWucavSyzUy@viaduct.proxy.rlwy.net:51878/railway"
 
 export const pool = new Pool(
     {
@@ -22,6 +22,11 @@ export const users = pgTable('users', {
     display_name: varchar('display_name', { length: 32 }),
     created_at: varchar('created_at'),
     active: boolean('active').default(true)
+})
+
+export const test = pgTable('test', {
+    id: serial('id').primaryKey(),
+    aaaa: varchar('aaaa', { length: 32 }),
 })
 
 export const user_friends = pgTable('user_friends', {
