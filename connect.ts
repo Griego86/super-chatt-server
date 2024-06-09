@@ -15,12 +15,12 @@ export const pool = new Pool(
 export const db = drizzle(pool);
 
 export const users = pgTable('users', {
-    user_id: serial('user_id').primaryKey(),
-    username: varchar('username', { length: 32 }),
-    password: varchar('password', { length: 80 }),
-    email: varchar('email', { length: 255 }),
-    display_name: varchar('display_name', { length: 32 }),
-    created_at: varchar('created_at'),
+    id: serial('id').primaryKey(),
+    username: varchar('username', { length: 32 }).notNull(),
+    password: varchar('password', { length: 80 }).notNull(),
+    email: varchar('email', { length: 255 }).notNull(),
+    // display_name: varchar('display_name', { length: 32 }),
+    create_date: varchar('create_date'),
     active: boolean('active').default(true)
 })
 

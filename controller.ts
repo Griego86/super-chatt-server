@@ -22,7 +22,7 @@ export async function validateUser(req: Request, res: Response) {
               return res.status(500).send("Internal Server Error");
           }
           if (result) {
-              const token = jwt.sign({ id: user.user_id }, process.env.JWT_SECRET || "default_secret", { expiresIn: "14 days" });
+              const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || "default_secret", { expiresIn: "14 days" });
               return res.json({ result: { user, token } });
           } else {
               return res.json({ result: { user: null, token: null } });
@@ -56,7 +56,7 @@ export async function decryptToken(req: Request, res: Response) {
 
 export async function searchUserById(id: number) {
   try {
-      const result = await db.select().from(users).where(eq(users.user_id, id));
+      const result = await db.select().from(users).where(eq(users.id, id));
       if (result.length === 0) {
           return null;
       }
@@ -68,8 +68,20 @@ export async function searchUserById(id: number) {
   }
 }
 
+export async function getAllUsers(req: Request, res: Response) {
+    try {
+        const allUsers = await db.select().from(users)
+        res.status(200).json(allUsers)
+    }
+    catch (err) {
+        console.log(err);
+        res.status(400).json({error: "Cannot get all the users!"})
+        
+    }
+}
+
 export async function createUser(req: Request, res: Response) {
-  const { username, password, email } = req.body
+  const { username, password, email, active } = req.body
   
   if (username.length > 32) {
       return res.json({ success: false, message: "Username max char limit is 32" });
@@ -90,11 +102,11 @@ export async function createUser(req: Request, res: Response) {
           return res.json({ success: false, message: "An account associated with this email already exists" });
       };
       
-      const encrypted = await bcrypt.hash(password, saltRounds);
-      const displayName = username;
+      const passwordHash = await bcrypt.hash(password, saltRounds);
+    //   const displayName = username;
       const now = new Date();
       const timestamp = now.toISOString();
-      await db.insert(users).values({ username, password: encrypted, email, display_name: displayName, created_at: timestamp });
+      await db.insert(users).values({username: username, password: passwordHash, email: email, create_date: timestamp, active: active})
       res.status(201).send({ success: true, message: "Sign up successful!" })
   }
   catch (err) {
@@ -147,7 +159,7 @@ export async function updateUserPassword(req: Request, res: Response) {
         const incomingUser = await req.body;
         const incomingPassword = incomingUser.password;
         const encrypted = await bcrypt.hash(incomingPassword, saltRounds);
-        await db.update(users).set({ password: encrypted.toString() }).where(eq(users.user_id, userId));
+        await db.update(users).set({ password: encrypted.toString() }).where(eq(users.id, userId));
         res.status(200).json({ success: true });
     }
     catch (err) {
@@ -160,7 +172,7 @@ export async function updateUsername(req: Request, res: Response) {
     try {
         const userId = parseInt(req.params.userId);
         const incomingUsername = await req.body.username;
-        await db.update(users).set({ username: incomingUsername.toString() }).where(eq(users.user_id, userId));
+        await db.update(users).set({ username: incomingUsername.toString() }).where(eq(users.id, userId));
         res.status(200).json({ success: true });
     }
     catch (err) {
@@ -174,7 +186,7 @@ export async function blockUser(req: Request, res: Response) {
         const userId = req.body.userId;
         const friendName = req.params.friendName;
         const friend = await db.select().from(users).where(eq(users.username, friendName));
-        await db.update(user_friends).set({ blocked: true }).where(and(eq(user_friends.user_id, userId), eq(user_friends.friend_id, friend[0].user_id)));
+        await db.update(user_friends).set({ blocked: true }).where(and(eq(user_friends.user_id, userId), eq(user_friends.friend_id, friend[0].id)));
         res.status(200).json({ success: true });
     }
     catch (err) {
@@ -188,7 +200,7 @@ export async function unblockUser(req: Request, res: Response) {
         const userId = req.body.userId;
         const friendName = req.params.friendName;
         const friend = await db.select().from(users).where(eq(users.username, friendName));
-        await db.update(user_friends).set({ blocked: false }).where(and(eq(user_friends.user_id, userId), eq(user_friends.friend_id, friend[0].user_id)));
+        await db.update(user_friends).set({ blocked: false }).where(and(eq(user_friends.user_id, userId), eq(user_friends.friend_id, friend[0].id)));
         res.status(200).json({ success: true });
     }
     catch (err) {
@@ -202,7 +214,7 @@ export async function getUserFriend(req: Request, res: Response) {
         const userId = req.body.userId;
         const friendName = req.params.friendName;
         const friend = await db.select().from(users).where(eq(users.username, friendName));
-        const response = await db.select().from(user_friends).where(and(eq(user_friends.user_id, parseInt(userId)), eq(user_friends.friend_id, friend[0].user_id)));
+        const response = await db.select().from(user_friends).where(and(eq(user_friends.user_id, parseInt(userId)), eq(user_friends.friend_id, friend[0].id)));
         const userFriend = response[0]
         res.status(200).json(userFriend);
     }
@@ -222,9 +234,9 @@ export async function addFriend(req: Request, res: Response) {
         if (friendResult.length === 0) {
             return res.json({ success: false, message: "User does not exist" });
         }
-        const friendId = friendResult[0].user_id;
+        const friendId = friendResult[0].id;
         const userResult = await db.select().from(users).where(eq(users.username, username));
-        const userId = userResult[0].user_id;
+        const userId = userResult[0].id;
         const friendshipResult = await db.select().from(user_friends).where(and(eq(user_friends.user_id, userId), eq(user_friends.friend_id, friendId)));
         if (friendshipResult.length > 0) {
             return res.json({ success: false, message: "User is already your friend!" });
@@ -270,8 +282,8 @@ export async function createChat(req: Request, res: Response) {
         await db.insert(chats).values({ title: title, created_at: timestamp });
         const chatsQuery = await db.select().from(chats).where(eq(chats.title, title))
         const chatId = chatsQuery[chatsQuery.length - 1].chat_id;
-        await db.insert(user_chats).values({ user_id: user.user_id, chat_id: chatId, created_at: timestamp });
-        await db.insert(user_chats).values({ user_id: friend.user_id, chat_id: chatId, created_at: timestamp });
+        await db.insert(user_chats).values({ user_id: user.id, chat_id: chatId, created_at: timestamp });
+        await db.insert(user_chats).values({ user_id: friend.id, chat_id: chatId, created_at: timestamp });
         res.status(200).json({ success: true, message: "Chat added successfully!" });
     }
     catch (err) {
