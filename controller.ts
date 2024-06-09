@@ -106,7 +106,7 @@ export async function createUser(req: Request, res: Response) {
     //   const displayName = username;
       const now = new Date();
       const timestamp = now.toISOString();
-      await db.insert(users).values({username: username, password: passwordHash, email: email, create_date: timestamp, active: active})
+      await db.insert(users).values({username: username, password: passwordHash, email: email, create_date: timestamp})
       res.status(201).send({ success: true, message: "Sign up successful!" })
   }
   catch (err) {
