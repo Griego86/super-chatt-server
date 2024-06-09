@@ -71,15 +71,15 @@ export async function searchUserById(id: number) {
 export async function createUser(req: Request, res: Response) {
   const { username, password, email } = req.body
   
-//   if (username.length > 32) {
-//       return res.json({ success: false, message: "Username max char limit is 32" });
-//   }
-//   if (password.length > 80) {
-//       return res.json({ success: false, message: "password max char limit is 80" });
-//   }
-//   if (email.length > 255) {
-//       return res.json({ success: false, message: "email max char limit is 255" });
-//   }
+  if (username.length > 32) {
+      return res.json({ success: false, message: "Username max char limit is 32" });
+  }
+  if (password.length > 80) {
+      return res.json({ success: false, message: "password max char limit is 80" });
+  }
+  if (email.length > 255) {
+      return res.json({ success: false, message: "email max char limit is 255" });
+  }
   try {
       const usernameQuery = await db.select().from(users).where(eq(users.username, username))
       if (usernameQuery.length > 0) {
