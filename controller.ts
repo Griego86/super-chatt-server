@@ -318,3 +318,23 @@ export async function getChat(req: Request, res: Response) {
         res.status(500).json({ success: false, message: "Error getting chat" });
     }
 }
+
+export async function leaveChat(req: Request, res: Response) {
+    try {
+        const userId = req.body.userId;
+        const chatId = req.body.chatId;
+        console.log(chatId)
+        await db.delete(user_chats).where(and(eq(user_chats.user_id, userId), eq(user_chats.chat_id, chatId)));
+        const userChatQuery = await db.select().from(user_chats).where(eq(user_chats.chat_id, chatId));
+        console.log(userChatQuery.length)
+        if (userChatQuery.length === 0) {
+            await db.delete(chats).where(eq(chats.chat_id, chatId));
+            await db.delete(messages).where(eq(messages.chat_id, chatId));
+        }
+        res.status(200).json({ success: true });
+    }
+    catch (err) {
+        console.log(err);
+        res.status(500).json({ success: false, message: "Error leaving chat" });
+    }
+}
