@@ -380,3 +380,24 @@ export async function addFriendToChat(req: Request, res: Response) {
         res.status(500).json({ success: false, message: "Error adding friend to chat" });
     }
 }
+
+export async function createMessage(req: Request, res: Response) {
+    const inputContent = req.body.content;
+    const user = req.body.user;
+    const chatId = req.body.chatId;
+    const reply_username = req.body.reply_username;
+    const reply_content = req.body.reply_content;
+    if (inputContent.length > 25000) {
+        return res.json({ success: false, message: "content max char limit is 25000" });
+    }
+    const now = new Date();
+    const timestamp = now.toISOString();
+    try {
+        await db.insert(messages).values({ content: inputContent, reply_content: reply_content, reply_username: reply_username, username: user, chat_id: chatId, created_at: timestamp });
+        res.status(200).json({ success: true, message: "Message added successfully!" });
+    }
+    catch (err) {
+        console.log(err)
+        res.status(500).json({ success: false, message: "Error creating message" });
+    }
+}
