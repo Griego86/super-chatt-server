@@ -414,3 +414,17 @@ export async function getMessages(req: Request, res: Response) {
         res.status(500).json({ success: false, message: "Error getting messages" });
     }
 }
+
+export async function updateMessage(req: Request, res: Response) {
+    try {
+        const messageId = req.params.messageId;
+        const content = req.body.content
+        //@ts-ignore
+        await db.update(messages).set({ content: content }).where(eq(messages.message_id, messageId));
+        res.status(200).json({ success: true });
+    }
+    catch (err) {
+        console.log(err);
+        res.status(500).json({ success: false, message: "Error updating message" });
+    }
+}
