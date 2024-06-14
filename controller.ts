@@ -401,3 +401,16 @@ export async function createMessage(req: Request, res: Response) {
         res.status(500).json({ success: false, message: "Error creating message" });
     }
 }
+
+export async function getMessages(req: Request, res: Response) {
+    try {
+        const chatId = req.params.chatId;
+        //@ts-ignore
+        const messagesQuery = await db.select().from(messages).where(eq(messages.chat_id, chatId));
+        res.status(200).json(messagesQuery)
+    }
+    catch (err) {
+        console.log(err);
+        res.status(500).json({ success: false, message: "Error getting messages" });
+    }
+}
