@@ -428,3 +428,21 @@ export async function updateMessage(req: Request, res: Response) {
         res.status(500).json({ success: false, message: "Error updating message" });
     }
 }
+
+export async function createComment(req: Request, res: Response) {
+    try {
+        const email = req.body.email;
+        const content = req.body.content;
+        if (content.length > 50000) {
+            return res.json({ success: false, message: "content max char limit is 50000" });
+        }
+        const now = new Date();
+        const timestamp = now.toISOString();
+        await db.insert(comments).values({ email: email, content: content, created_at: timestamp });
+        res.status(200).json({ success: true });
+    }
+    catch (err) {
+        console.log(err);
+        res.status(500).json({ success: false, message: "Error sending comment" });
+    }
+}
