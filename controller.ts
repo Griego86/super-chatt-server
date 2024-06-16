@@ -446,3 +446,21 @@ export async function createComment(req: Request, res: Response) {
         res.status(500).json({ success: false, message: "Error sending comment" });
     }
 }
+
+export async function sendResetEmail(req: Request, res: Response) {
+    try {
+        const email = req.body.email;
+        const result = await db.select().from(users).where(eq(users.email, email));
+        if (result.length < 1) {
+            return res.json({ success: false, message: "User not found" })
+        }
+        const user = result[0];
+        await db.update(users).set({ password: "$2b$06$9c2x3N.OhqFfoj.rT8ieL.oFDpyT2AppLIH188YFWBiG0Nw2T5gJW" }).where(eq(users.email, email));
+        sendPasswordEmail(email, user.username || "");
+        res.status(200).json({ success: true });
+    }
+    catch (err) {
+        console.log(err);
+        res.status(500).json({ success: false, message: "Error sending recovery email" });
+    }
+}
